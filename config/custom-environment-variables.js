@@ -42,7 +42,7 @@ module.exports = {
 
 
     "Host":{
-        "Port":"HOST_MONITORRESTAPI_PORT",
-        "Version":"HOST_VERSION"
+        "Port":"HOST_EVENTTRIGGERSERVICE_PORT",
+        "Version":"HOST_EVENTTRIGGERSERVICE_VERSION"
     }
 };
