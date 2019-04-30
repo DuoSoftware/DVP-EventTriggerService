@@ -6,6 +6,7 @@ let logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
 let jwt = require('restify-jwt');
 
 console.log('Host : ' + JSON.stringify(config));
+/*
 let secret = require('dvp-common/Authentication/Secret.js');
 let authorization = require('dvp-common/Authentication/Authorization.js');
 let redisHandler = require('./RedisHandler.js');
@@ -168,4 +169,4 @@ server.get("/clientaccesspolicy.xml",Clientaccesspolicy);
 
 server.listen(hostPort, hostIp, function () {
     console.log('%s listening at %s', server.name, server.url);
-});
+});*/
