@@ -170,3 +170,5 @@ server.get("/clientaccesspolicy.xml",Clientaccesspolicy);
 server.listen(hostPort, hostIp, function () {
     console.log('%s listening at %s', server.name, server.url);
 });*/
+
+process.stdin.resume();
