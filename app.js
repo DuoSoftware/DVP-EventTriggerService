@@ -1,11 +1,11 @@
 let restify = require('restify');
-let config = require('config');
+var config = require('config');
 let messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 let nodeUuid = require('node-uuid');
 let logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
 let jwt = require('restify-jwt');
 
-//console.log('Host : ' + JSON.stringify(config));
+console.log('Host : ' + JSON.stringify(config));
 
 let secret = require('dvp-common/Authentication/Secret.js');
 let authorization = require('dvp-common/Authentication/Authorization.js');
