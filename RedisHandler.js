@@ -230,7 +230,23 @@ let RemoveItemFromHash = function(hashName, key, callback)
     try
     {
         logger.debug('[DVP-EventTriggerService.RemoveItemFromHash] - [%s] - Method Params - hashName : %s, key : %s', hashName, key);
-        client.hset(hashName, key, value, function (err, hashObj)
+        client.hdel(hashName, key, function (err, hashObj)
+        {
+            callback(err, hashObj);
+        });
+    }
+    catch(ex)
+    {
+        callback(ex, null);
+    }
+};
+
+let HashGetAll = function(hashName, callback)
+{
+    try
+    {
+        logger.debug('[DVP-EventTriggerService.HashGetAll] - [%s] - Method Params - hashName : %s', hashName);
+        client.hgetall(hashName, function (err, hashObj)
         {
             callback(err, hashObj);
         });
@@ -326,3 +342,4 @@ module.exports.GetObject = GetObject;
 module.exports.GetKeys = GetKeys;
 module.exports.MGetObjects = MGetObjects;
 module.exports.MultipleHashHGetAll = MultipleHashHGetAll;
+module.exports.HashGetAll = HashGetAll;

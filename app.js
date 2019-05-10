@@ -1,9 +1,11 @@
 let restify = require('restify');
-var config = require('config');
+let config = require('config');
+let async = require('async');
 let messageFormatter = require('dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js');
 let nodeUuid = require('node-uuid');
 let logger = require('dvp-common/LogHandler/CommonLogHandler.js').logger;
 let jwt = require('restify-jwt');
+let externalApi = require('./ExternalApiHandler.js');
 
 console.log('Host : ' + JSON.stringify(config));
 
@@ -42,79 +44,188 @@ server.use(jwt({secret: secret.Secret,
     }}));
 
 
-
-server.post('/DVP/API/:version/EventTrigger/Zapier/Call/Subscribe', authorization({resource:"sysmonitoring", action:"write"}), function(req, res, next)
+server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"cdr", action:"read"}), function(req, res, next)
 {
     try
     {
-        logger.debug('[DVP-EventTriggerService.ZapierCallSubscribe] - METHOD CALL - Body : %s', JSON.stringify(req.body));
-        let subId = nodeUuid.v1();
+        logger.debug('[DVP-EventTriggerService.Trigger] - METHOD CALL - Body : %s', JSON.stringify(req.body));
         let companyId = req.user.company;
         let tenantId = req.user.tenant;
-        let hashName = 'Zapier:' + tenantId + ':' + companyId + ':CALL';
 
-        redisHandler.AddToHash(hashName, subId, req.body.hookUrl, function(err, result){
-            if(err){
-                logger.error('[DVP-EventTriggerService.ZapierCallSubscribe] - ERROR : ', err);
-                res.end('{}');
-            }else{
-                let respToZapier = {id: subId, url: req.body.hookUrl};
+        let emptyList = [];
 
-                let apiResp = JSON.stringify(respToZapier);
+        if(req.query && req.query.eventType)
+        {
+            let evtType = req.query.eventType;
 
-                logger.info('[DVP-EventTriggerService.ZapierCallSubscribe] - API RESPONSE : %s', apiResp);
+            if (evtType === 'CALL' || evtType === 'AGENT' || evtType === 'TICKET')
+            {
+                let hashName = 'EventTrigger:' + tenantId + ':' + companyId + ':' + evtType;
 
-                res.end(apiResp);
+                redisHandler.HashGetAll(hashName, function(err, hashObj){
+                    if(err){
+                        logger.error('[DVP-EventTriggerService.Trigger] - ERROR : ', err);
+                        let jsonString = messageFormatter.FormatMessage(err, "API RESPONSE", false, emptyList);
+                        res.end(jsonString)
+                    }else{
+                        if(hashObj)
+                        {
+                            let arr = [];
+                            for(let key in hashObj)
+                            {
+                                arr.push(externalApi.CallExternalAPI.bind(this, hashObj[key], req.body));
+                            }
+
+                            async.parallel(arr, function (err, urlList)
+                            {
+                                let jsonString = messageFormatter.FormatMessage(err, "API RESPONSE", !err, urlList);
+                                res.end(jsonString)
+                            })
+                        }
+                        else
+                        {
+                            let jsonString = messageFormatter.FormatMessage(null, "API RESPONSE", true, emptyList);
+                            res.end(jsonString)
+                        }
+
+                    }
+                });
             }
-        });
+            else
+            {
+                logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', new Error('Unsupported event type'));
+                let jsonString = messageFormatter.FormatMessage(new Error('Unsupported event type'), "API RESPONSE", false, emptyList);
+                res.end(jsonString)
+            }
+
+        }
+        else{
+            logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', new Error('Empty Body'));
+            let jsonString = messageFormatter.FormatMessage(new Error('Empty Body'), "API RESPONSE", false, emptyList);
+            res.end(jsonString)
+        }
+
+
 
     }
     catch(ex)
     {
-        logger.error('[DVP-MonitorRestAPI.GetConferenceUsers] - ERROR : ', ex);
+        logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', ex);
+        let jsonString = messageFormatter.FormatMessage(ex, "API RESPONSE", false, emptyList);
+        res.end(jsonString)
+    }
+
+    return next();
+});
+
+
+server.post('/DVP/API/:version/EventTrigger/Subscribe', authorization({resource:"cdr", action:"read"}), function(req, res, next)
+{
+    try
+    {
+        logger.debug('[DVP-EventTriggerService.Subscribe] - METHOD CALL - Body : %s', JSON.stringify(req.body));
+        let subId = nodeUuid.v1();
+        let companyId = req.user.company;
+        let tenantId = req.user.tenant;
+
+        if(req.body && req.body.eventType)
+        {
+            let evtType = req.body.eventType;
+
+            if (evtType === 'CALL' || evtType === 'AGENT' || evtType === 'TICKET')
+            {
+                let hashName = 'EventTrigger:' + tenantId + ':' + companyId + ':' + evtType;
+
+                redisHandler.AddToHash(hashName, subId, req.body.hookUrl, function(err, result){
+                    if(err){
+                        logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', err);
+                        res.end('{}');
+                    }else{
+                        let respToZapier = {id: subId, url: req.body.hookUrl};
+
+                        let apiResp = JSON.stringify(respToZapier);
+
+                        logger.info('[DVP-EventTriggerService.Subscribe] - API RESPONSE : %s', apiResp);
+
+                        res.end(apiResp);
+                    }
+                });
+            }
+            else
+            {
+                logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', new Error('Unsupported event type'));
+                res.end('{}');
+            }
+
+        }
+        else{
+            logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', new Error('Empty Body'));
+            res.end('{}');
+        }
+
+
+
+    }
+    catch(ex)
+    {
+        logger.error('[DVP-EventTriggerService.Subscribe] - ERROR : ', ex);
         res.end('{}');
     }
 
     return next();
 });
 
-server.del('/DVP/API/:version/EventTrigger/Zapier/Call/UnSubscribe/:id', authorization({resource:"sysmonitoring", action:"write"}), function(req, res, next)
+server.del('/DVP/API/:version/EventTrigger/UnSubscribe/:id', authorization({resource:"cdr", action:"read"}), function(req, res, next)
 {
     try
     {
         let subId = req.params.id;
-        logger.debug('[DVP-EventTriggerService.ZapierCallUnSubscribe] - METHOD CALL - id : %s', subId);
+        logger.debug('[DVP-EventTriggerService.UnSubscribe] - METHOD CALL - id : %s', subId);
 
         let companyId = req.user.company;
         let tenantId = req.user.tenant;
-        let hashName = 'Zapier:' + tenantId + ':' + companyId + ':CALL';
 
-        redisHandler.RemoveItemFromHash(hashName, subId, function(err, result){
-            if(err){
-                logger.error('[DVP-EventTriggerService.ZapierCallUnSubscribe] - ERROR : ', err);
-                res.end('{}');
-            }else{
-                let respToZapier = {subscribeData: subId};
+        if(req.query && req.query.eventType)
+        {
+            let evtType = req.query.eventType;
 
-                let apiResp = JSON.stringify(respToZapier);
+            if (evtType === 'CALL' || evtType === 'AGENT' || evtType === 'TICKET')
+            {
+                let hashName = 'EventTrigger:' + tenantId + ':' + companyId + ':' + evtType;
 
-                logger.info('[DVP-EventTriggerService.ZapierCallUnSubscribe] - API RESPONSE : %s', apiResp);
+                redisHandler.RemoveItemFromHash(hashName, subId, function(err, result){
+                    if(err){
+                        logger.error('[DVP-EventTriggerService.UnSubscribe] - ERROR : ', err);
+                        res.end('{}');
+                    }else{
+                        let respToZapier = {subscribeData: subId};
 
-                res.end(apiResp);
+                        let apiResp = JSON.stringify(respToZapier);
+
+                        logger.info('[DVP-EventTriggerService.UnSubscribe] - API RESPONSE : %s', apiResp);
+
+                        res.end(apiResp);
+                    }
+                });
             }
-        });
+        }
+        else{
+            logger.error('[DVP-EventTriggerService.UnSubscribe] - ERROR : ', new Error('Empty Query Params'));
+            res.end('{}');
+        }
+
 
     }
     catch(ex)
     {
-        logger.error('[DVP-MonitorRestAPI.GetConferenceUsers] - ERROR : ', ex);
+        logger.error('[DVP-EventTriggerService.UnSubscribe] - ERROR : ', ex);
         res.end('{}');
     }
 
     return next();
 });
 
-server.post('/DVP/API/:version/EventTrigger/Zapier/Call/PerformList', authorization({resource:"sysmonitoring", action:"write"}), function(req, res, next)
+server.post('/DVP/API/:version/EventTrigger/Zapier/Call/PerformList', authorization({resource:"cdr", action:"read"}), function(req, res, next)
 {
     try
     {
