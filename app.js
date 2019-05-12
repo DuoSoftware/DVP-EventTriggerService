@@ -44,7 +44,7 @@ server.use(jwt({secret: secret.Secret,
     }}));
 
 
-server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"cdr", action:"read"}), function(req, res, next)
+server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"eventtrigger", action:"write"}), function(req, res, next)
 {
     try
     {
@@ -119,7 +119,7 @@ server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"c
 });
 
 
-server.post('/DVP/API/:version/EventTrigger/Subscribe', authorization({resource:"cdr", action:"read"}), function(req, res, next)
+server.post('/DVP/API/:version/EventTrigger/Subscribe', authorization({resource:"eventtrigger", action:"write"}), function(req, res, next)
 {
     try
     {
@@ -175,7 +175,7 @@ server.post('/DVP/API/:version/EventTrigger/Subscribe', authorization({resource:
     return next();
 });
 
-server.del('/DVP/API/:version/EventTrigger/UnSubscribe/:id', authorization({resource:"cdr", action:"read"}), function(req, res, next)
+server.del('/DVP/API/:version/EventTrigger/UnSubscribe/:id', authorization({resource:"eventtrigger", action:"delete"}), function(req, res, next)
 {
     try
     {
@@ -225,12 +225,12 @@ server.del('/DVP/API/:version/EventTrigger/UnSubscribe/:id', authorization({reso
     return next();
 });
 
-server.post('/DVP/API/:version/EventTrigger/Zapier/Call/PerformList', authorization({resource:"cdr", action:"read"}), function(req, res, next)
+server.post('/DVP/API/:version/EventTrigger/Zapier/Call/PerformList', authorization({resource:"eventtrigger", action:"read"}), function(req, res, next)
 {
     try
     {
         logger.debug('[DVP-EventTriggerService.ZapierCallPerformList] - METHOD CALL');
-        let plTestData = [{EventType: 'CREATE', SessionId: '123', Direction: 'inbound', From: 'FromNumber', To: 'ToNumber'}];
+        let plTestData = [{EventType: "EVTTYPE", Direction: "inbound", SessionId: "sessionid", Timestamp: "1557670909", From: "FromNumber", To: "ToNumber", Skill: "Skill", BusinessUnit: "BusinessUnit"}];
 
         let jsonStr = JSON.stringify(plTestData);
 
@@ -241,6 +241,66 @@ server.post('/DVP/API/:version/EventTrigger/Zapier/Call/PerformList', authorizat
     catch(ex)
     {
         logger.error('[DVP-MonitorRestAPI.ZapierCallPerformList] - ERROR : ', ex);
+        res.end('[]');
+    }
+
+    return next();
+});
+
+server.post('/DVP/API/:version/EventTrigger/Zapier/Ticket/PerformList', authorization({resource:"eventtrigger", action:"read"}), function(req, res, next)
+{
+    try
+    {
+        logger.debug('[DVP-EventTriggerService.ZapierTicketPerformList] - METHOD CALL');
+        let plTestData = [{EventType: "EVTTYPE",
+            TicketState: "STATUS",
+            Subject: "Ticket Subject",
+            Reference: "Ticket Reference",
+            Tags: "[\"Tag1\", \"Tag2\"]",
+            TicketType: "Ticket Type",
+            Priority: "Priority",
+            Requester: "Requester",
+            Submitter: "Submitter",
+            Assignee: "Assignee",
+            Other: "Comments",
+            BusinessUnit: "BusinessUnit",
+            Timestamp: "1557670909"}];
+
+        let jsonStr = JSON.stringify(plTestData);
+
+        logger.info('[DVP-EventTriggerService.ZapierTicketPerformList] - API RESPONSE : %s', jsonStr);
+        res.end(jsonStr);
+
+    }
+    catch(ex)
+    {
+        logger.error('[DVP-MonitorRestAPI.ZapierTicketPerformList] - ERROR : ', ex);
+        res.end('[]');
+    }
+
+    return next();
+});
+
+server.post('/DVP/API/:version/EventTrigger/Zapier/Agent/PerformList', authorization({resource:"eventtrigger", action:"read"}), function(req, res, next)
+{
+    try
+    {
+        logger.debug('[DVP-EventTriggerService.ZapierAgentPerformList] - METHOD CALL');
+        let plTestData = [{EventType: "EVTTYPE",
+            Reason: "Reason",
+            ResourceId: "Resource ID",
+            Timestamp: "1557670909",
+            BusinessUnit: "BusinessUnit"}];
+
+        let jsonStr = JSON.stringify(plTestData);
+
+        logger.info('[DVP-EventTriggerService.ZapierAgentPerformList] - API RESPONSE : %s', jsonStr);
+        res.end(jsonStr);
+
+    }
+    catch(ex)
+    {
+        logger.error('[DVP-MonitorRestAPI.ZapierAgentPerformList] - ERROR : ', ex);
         res.end('[]');
     }
 
