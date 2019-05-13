@@ -44,7 +44,7 @@ server.use(jwt({secret: secret.Secret,
     }}));
 
 
-server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"eventtrigger", action:"write"}), function(req, res, next)
+server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"cdr", action:"read"}), function(req, res, next)
 {
     try
     {
