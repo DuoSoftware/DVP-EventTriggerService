@@ -25,6 +25,7 @@ let CallExternalAPI = function(applicationUrl, payload, callback)
             }
             else
             {
+                logger.error('[DVP-EventTriggerService.CallExternalAPI] - [%s] -  Error calling api : %s', applicationUrl);
                 callback(error, null);
             }
         })
