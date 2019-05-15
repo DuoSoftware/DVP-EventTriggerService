@@ -70,6 +70,7 @@ server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"c
                     }else{
                         if(hashObj)
                         {
+                            logger.debug('[DVP-EventTriggerService.Trigger] - Hash Found : %s', JSON.stringify(hashObj));
                             let arr = [];
                             for(let key in hashObj)
                             {
