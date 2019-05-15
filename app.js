@@ -84,6 +84,7 @@ server.post('/DVP/API/:version/EventTrigger/Trigger', authorization({resource:"c
                         }
                         else
                         {
+                            logger.debug('[DVP-EventTriggerService.Trigger] - Hash Not Found');
                             let jsonString = messageFormatter.FormatMessage(null, "API RESPONSE", true, emptyList);
                             res.end(jsonString)
                         }
