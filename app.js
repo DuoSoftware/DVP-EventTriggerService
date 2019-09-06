@@ -289,8 +289,9 @@ server.post('/DVP/API/:version/EventTrigger/Zapier/Agent/PerformList', authoriza
     {
         logger.debug('[DVP-EventTriggerService.ZapierAgentPerformList] - METHOD CALL');
         let plTestData = [{EventType: "EVTTYPE",
-            Reason: "Reason",
+            Mode: "Reason",
             ResourceId: "Resource ID",
+            Resource: "Resource",
             Timestamp: "1557670909",
             BusinessUnit: "BusinessUnit"}];
 
