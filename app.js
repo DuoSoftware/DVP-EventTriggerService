@@ -47,7 +47,7 @@ server.use(
   }).unless({ path: ["/healthcheck"] }),
 );
 var hc = new healthcheck(server, {
-  redis: organisationService.RedisCon,
+  redis: redisHandler.RedisCon,
 });
 hc.Initiate();
 
