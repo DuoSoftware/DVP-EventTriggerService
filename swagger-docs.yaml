@@ -1,0 +1,219 @@
+paths:
+  /DVP/API/{version}/EventTrigger/Trigger:
+    post:
+      tags: [EventTrigger]
+      summary: Fire event trigger
+      description: Looks up all registered webhooks for the given event type and calls them in parallel with the provided payload.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.0.0.0"
+        - name: eventType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CALL, AGENT, TICKET]
+          description: Event type to trigger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Event payload forwarded to all registered webhook URLs
+      responses:
+        "200":
+          description: Trigger result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /DVP/API/{version}/EventTrigger/Subscribe:
+    post:
+      tags: [EventTrigger]
+      summary: Subscribe a webhook
+      description: Registers a webhook URL for the specified event type. Returns the subscription ID and URL.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.0.0.0"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscribeRequest"
+      responses:
+        "200":
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscribeResponse"
+        "401":
+          description: Unauthorized
+
+  /DVP/API/{version}/EventTrigger/UnSubscribe/{id}:
+    delete:
+      tags: [EventTrigger]
+      summary: Unsubscribe a webhook
+      description: Removes a previously registered webhook subscription by its ID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.0.0.0"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Subscription ID returned during Subscribe
+        - name: eventType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [CALL, AGENT, TICKET]
+          description: Event type the subscription belongs to
+      responses:
+        "200":
+          description: Unsubscribed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscribeData:
+                    type: string
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+        "401":
+          description: Unauthorized
+
+  /DVP/API/{version}/EventTrigger/Zapier/Call/PerformList:
+    post:
+      tags: [Zapier]
+      summary: Zapier call perform list
+      description: Returns sample CALL event data for Zapier trigger configuration.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.0.0.0"
+      responses:
+        "200":
+          description: Sample CALL event data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    EventType: { type: string, example: "EVTTYPE" }
+                    Direction: { type: string, example: "inbound" }
+                    SessionId: { type: string, example: "sessionid" }
+                    Timestamp: { type: string, example: "1557670909" }
+                    From: { type: string, example: "FromNumber" }
+                    To: { type: string, example: "ToNumber" }
+                    Skill: { type: string, example: "Skill" }
+                    BusinessUnit: { type: string, example: "BusinessUnit" }
+        "401":
+          description: Unauthorized
+
+  /DVP/API/{version}/EventTrigger/Zapier/Ticket/PerformList:
+    post:
+      tags: [Zapier]
+      summary: Zapier ticket perform list
+      description: Returns sample TICKET event data for Zapier trigger configuration.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.0.0.0"
+      responses:
+        "200":
+          description: Sample TICKET event data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    EventType: { type: string, example: "EVTTYPE" }
+                    TicketState: { type: string, example: "STATUS" }
+                    Subject: { type: string, example: "Ticket Subject" }
+                    Reference: { type: string, example: "Ticket Reference" }
+                    Tags: { type: string, example: '["Tag1", "Tag2"]' }
+                    TicketType: { type: string, example: "Ticket Type" }
+                    Priority: { type: string, example: "Priority" }
+                    Requester: { type: string, example: "Requester" }
+                    Submitter: { type: string, example: "Submitter" }
+                    Assignee: { type: string, example: "Assignee" }
+                    Other: { type: string, example: "Comments" }
+                    BusinessUnit: { type: string, example: "BusinessUnit" }
+                    Timestamp: { type: string, example: "1557670909" }
+        "401":
+          description: Unauthorized
+
+  /DVP/API/{version}/EventTrigger/Zapier/Agent/PerformList:
+    post:
+      tags: [Zapier]
+      summary: Zapier agent perform list
+      description: Returns sample AGENT event data for Zapier trigger configuration.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "1.0.0.0"
+      responses:
+        "200":
+          description: Sample AGENT event data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    EventType: { type: string, example: "EVTTYPE" }
+                    Mode: { type: string, example: "Reason" }
+                    ResourceId: { type: string, example: "Resource ID" }
+                    Resource: { type: string, example: "Resource" }
+                    Timestamp: { type: string, example: "1557670909" }
+                    BusinessUnit: { type: string, example: "BusinessUnit" }
+        "401":
+          description: Unauthorized

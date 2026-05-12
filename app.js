@@ -8,7 +8,7 @@ let logger = require("dvp-common/LogHandler/CommonLogHandler.js").logger;
 let jwt = require("restify-jwt");
 let externalApi = require("./ExternalApiHandler.js");
 //need when test with swagger ui, otherwise the ui will not be able to parse the response and show the response in red color
-//let swagger = require("./swagger.js");
+let swagger = require("./swagger.js");
 
 console.log("Host : " + JSON.stringify(config));
 
@@ -50,8 +50,8 @@ server.use(
       }
       return null;
     },
-  })
-  
+  }),
+
   //need when test with swagger ui, otherwise the ui will not be able to parse the response and show the response in red color
 
   // .unless({
@@ -60,7 +60,7 @@ server.use(
   //     "/clientaccesspolicy.xml",
   //     "/api-docs.json",
   //     "/api-docs",
-  //     /^\/api-docs\/.*/,  
+  //     /^\/api-docs\/.*/,
   //   ],
   // }),
 );
