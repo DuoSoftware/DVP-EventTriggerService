@@ -8,7 +8,7 @@
 # CMD [ "node", "/usr/local/src/eventtriggerservice/app.js" ]
 
 
-FROM node:10-alpine
+FROM node:24-alpine
 WORKDIR /usr/local/src/eventtriggerservice
 COPY package*.json ./
 RUN npm install
