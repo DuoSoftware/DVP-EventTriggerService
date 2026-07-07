@@ -44,8 +44,13 @@ server.use(
       }
       return null;
     },
-  })
+  }).unless({ path: ["/health/live"] })
 );
+
+server.get("/health/live", function (req, res, next) {
+  res.send(200, "live");
+  return next();
+});
 
 server.post(
   "/DVP/API/:version/EventTrigger/Trigger",
