@@ -1,18 +1,9 @@
 module.exports = {
-  DB: {
-    Type: "postgres",
-    User: "",
-    Password: "",
-    Port: 5432,
-    Host: "",
-    Database: "",
-  },
 
   Redis: {
     mode: "instance", //instance, cluster, sentinel
     ip: "",
     port: 6389,
-    user: "",
     password: "",
     sentinels: {
       hosts: "",
@@ -24,7 +15,6 @@ module.exports = {
   Security: {
     ip: "",
     port: 6389,
-    user: "",
     password: "",
     mode: "instance", //instance, cluster, sentinel
     sentinels: {
