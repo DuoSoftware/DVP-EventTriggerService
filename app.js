@@ -13,6 +13,33 @@ let secret = require("dvp-common/Authentication/Secret.js");
 let authorization = require("dvp-common/Authentication/Authorization.js");
 let redisHandler = require("./RedisHandler.js");
 
+// Builds the subscription stored in redis for a webhook.
+// Returns an Error if the hook url or the credentials for the auth type are missing.
+let buildSubscription = function (body) {
+  if (!body.hookUrl) {
+    return new Error("hookUrl is required");
+  }
+
+  let subscription = { url: body.hookUrl };
+
+  if (body.authType === "Bearer") {
+    if (!body.token) {
+      return new Error("token is required for Bearer auth");
+    }
+    subscription.authType = "Bearer";
+    subscription.token = body.token;
+  } else if (body.authType === "Basic") {
+    if (!body.username || !body.password) {
+      return new Error("username and password are required for Basic auth");
+    }
+    subscription.authType = "Basic";
+    subscription.username = body.username;
+    subscription.password = body.password;
+  }
+
+  return subscription;
+};
+
 let hostIp = config.Host.Ip;
 let hostPort = config.Host.Port;
 let hostVersion = config.Host.Version;
@@ -80,9 +107,16 @@ server.post(
               res.end(jsonString);
             } else {
               if (hashObj) {
+                // log only ids and urls - subscription values may hold webhook credentials
+                let hookSummary = {};
+                for (let hookId in hashObj) {
+                  hookSummary[hookId] = externalApi.toSubscription(
+                    hashObj[hookId]
+                  ).url;
+                }
                 logger.debug(
                   "[DVP-EventTriggerService.Trigger] - Hash Found : %s",
-                  JSON.stringify(hashObj)
+                  JSON.stringify(hookSummary)
                 );
                 let arr = [];
                 for (let key in hashObj) {
@@ -164,9 +198,12 @@ server.post(
   authorization({ resource: "eventtrigger", action: "write" }),
   function (req, res, next) {
     try {
+      // do not log credentials
       logger.debug(
-        "[DVP-EventTriggerService.Subscribe] - METHOD CALL - Body : %s",
-        JSON.stringify(req.body)
+        "[DVP-EventTriggerService.Subscribe] - METHOD CALL - eventType : %s, hookUrl : %s, authType : %s",
+        req.body ? req.body.eventType : undefined,
+        req.body ? req.body.hookUrl : undefined,
+        req.body && req.body.authType ? req.body.authType : "None"
       );
       let subId = nodeUuid.v1();
       let companyId = req.user.company;
@@ -176,10 +213,21 @@ server.post(
         let evtType = req.body.eventType;
 
         if (evtType === "CALL" || evtType === "AGENT" || evtType === "TICKET") {
+          let subscription = buildSubscription(req.body);
+
+          if (subscription instanceof Error) {
+            logger.error(
+              "[DVP-EventTriggerService.Subscribe] - ERROR : ",
+              subscription
+            );
+            res.end("{}");
+            return next();
+          }
+
           let hashName =
             "EventTrigger:" + tenantId + ":" + companyId + ":" + evtType;
 
-          redisHandler.AddToHash(hashName, subId, req.body.hookUrl, function (
+          redisHandler.AddToHash(hashName, subId, JSON.stringify(subscription), function (
             err,
             result
           ) {

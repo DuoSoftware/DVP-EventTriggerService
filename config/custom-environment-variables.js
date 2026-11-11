@@ -38,4 +38,6 @@ module.exports = {
     Port: "HOST_EVENTTRIGGERSERVICE_PORT",
     Version: "HOST_EVENTTRIGGERSERVICE_VERSION",
   },
+
+  WebhookTimeout: "HOST_WEBHOOK_TIMEOUT",
 };

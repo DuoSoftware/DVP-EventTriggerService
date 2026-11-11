@@ -39,4 +39,7 @@ module.exports = {
     Port: "3645",
     Version: "1.0.0.0",
   },
+
+  // timeout (ms) for outbound webhook calls
+  WebhookTimeout: 10000,
 };
